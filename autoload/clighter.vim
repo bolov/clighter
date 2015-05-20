@@ -6,6 +6,7 @@ py import clighter
 py import highlighting
 py import clang_service
 py import refactor
+py import compilation_flags
 
 if !empty(g:clighter_libclang_file)
     exe 'python clang_service.ClangService.set_library_file("'.g:clighter_libclang_file.'")'
@@ -56,7 +57,9 @@ fun! clighter#Enable()
         let a:cwd = ''
     endif
 
-    let a:start_cmd = printf("clang_service.ClangService().start('%s', %d, %s)", a:cwd, g:clighter_heuristic_compile_args, string(g:clighter_compile_args))
+    let a:compile_args = pyeval("compilation_flags.get()")
+
+    let a:start_cmd = printf("clang_service.ClangService().start('%s', %d, %s)", a:cwd, g:clighter_heuristic_compile_args, a:compile_args)
 
     if !pyeval(a:start_cmd)
         echohl WarningMsg |
