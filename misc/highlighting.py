@@ -7,6 +7,116 @@ from clang import cindex
 OCCURRENCES_PRI = -11
 SYNTAX_PRI = -12
 
+
+class SyntaxGroup:
+    def __init__(self, group_name, cursor_kind, decl_kind = None):
+        self.group_name = group_name
+        self.cursor_kind = cursor_kind
+        self.decl_kind = decl_kind
+
+    def isMatch(self, cursor_kind, decl_kind):
+        return (self.cursor_kind is None or self.cursor_kind == cursor_kind) \
+                and \
+               (self.decl_kind is None or self.decl_kind == decl_kind)
+
+SYNTAX_GROUPS = [
+        SyntaxGroup("clighterNamespaceDecl", cindex.CursorKind.NAMESPACE),
+        SyntaxGroup("clighterNamespaceRef", cindex.CursorKind.NAMESPACE_REF),
+
+        SyntaxGroup("clighterStructDecl", cindex.CursorKind.STRUCT_DECL),
+        SyntaxGroup("clighterClassDecl", cindex.CursorKind.CLASS_DECL),
+        SyntaxGroup("clighterUnionDecl", cindex.CursorKind.UNION_DECL),
+        SyntaxGroup("clighterEnumDecl", cindex.CursorKind.ENUM_DECL),
+        SyntaxGroup("clighterTypedefDecl", cindex.CursorKind.TYPEDEF_DECL),
+        SyntaxGroup("clighterTypedefDecl", cindex.CursorKind.TYPE_ALIAS_DECL),
+
+        SyntaxGroup("clighterStructRef",
+            cindex.CursorKind.TYPE_REF, cindex.CursorKind.STRUCT_DECL),
+        SyntaxGroup("clighterClassRef",
+            cindex.CursorKind.TYPE_REF, cindex.CursorKind.CLASS_DECL),
+        SyntaxGroup("clighterUnionRef",
+            cindex.CursorKind.TYPE_REF, cindex.CursorKind.UNION_DECL),
+        SyntaxGroup("clighterEnumRef",
+            cindex.CursorKind.TYPE_REF, cindex.CursorKind.ENUM_DECL),
+        SyntaxGroup("clighterOtherTypeRef", cindex.CursorKind.TYPE_REF),
+
+        SyntaxGroup("clighterEnumConstantDecl",
+            cindex.CursorKind.ENUM_CONSTANT_DECL),
+        SyntaxGroup("clighterEnumConstantRef",
+            cindex.CursorKind.DECL_REF_EXPR,
+            cindex.CursorKind.ENUM_CONSTANT_DECL),
+
+        SyntaxGroup("cligherTemplateTypeParamDecl",
+            cindex.CursorKind.TEMPLATE_TYPE_PARAMETER),
+        SyntaxGroup("cligherTemplateTypeParamRef",
+            cindex.CursorKind.TEMPLATE_REF,
+            cindex.CursorKind.TEMPLATE_TYPE_PARAMETER),
+
+        SyntaxGroup("cligherTemplateNonTypeParamDecl",
+            cindex.CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
+        SyntaxGroup("cligherTemplateNonTypeParamRef",
+            cindex.CursorKind.TEMPLATE_REF,
+            cindex.CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
+
+        #TODO template template
+
+        SyntaxGroup("cligherClassTemplateDecl",
+            cindex.CursorKind.CLASS_TEMPLATE),
+        SyntaxGroup("cligherClassTemplateRef",
+            cindex.CursorKind.TEMPLATE_REF,
+            cindex.CursorKind.CLASS_TEMPLATE),
+
+        SyntaxGroup("cligherClassTemplatePartialSpecDecl",
+            cindex.CursorKind.CLASS_TEMPLATE_PARTIAL_SPECIALIZATION),
+        SyntaxGroup("cligherClassTemplatePartialSpecRef",
+            cindex.CursorKind.TEMPLATE_REF,
+            cindex.CursorKind.CLASS_TEMPLATE_PARTIAL_SPECIALIZATION),
+
+        SyntaxGroup("cligherFunctionTemplateDecl",
+            cindex.CursorKind.FUNCTION_TEMPLATE),
+        SyntaxGroup("cligherFunctionTemplateRef",
+            cindex.CursorKind.TEMPLATE_REF,
+            cindex.CursorKind.FUNCTION_TEMPLATE),
+
+
+
+        SyntaxGroup("clighterMethodDecl", cindex.CursorKind.CXX_METHOD),
+        SyntaxGroup("clighterMethodRef",
+            cindex.CursorKind.MEMBER_REF, cindex.CursorKind.CXX_METHOD),
+        SyntaxGroup("clighterMethodRef",
+            cindex.CursorKind.MEMBER_REF_EXPR, cindex.CursorKind.CXX_METHOD),
+
+        SyntaxGroup("clighterCtorDecl", cindex.CursorKind.CONSTRUCTOR),
+        SyntaxGroup("clighterCtorRef",
+            cindex.CursorKind.MEMBER_REF, cindex.CursorKind.CONSTRUCTOR),
+        SyntaxGroup("clighterCtorRef",
+            cindex.CursorKind.MEMBER_REF_EXPR, cindex.CursorKind.CONSTRUCTOR),
+
+        SyntaxGroup("clighterDtorDecl", cindex.CursorKind.DESTRUCTOR),
+        SyntaxGroup("clighterDtorRef",
+            cindex.CursorKind.MEMBER_REF, cindex.CursorKind.DESTRUCTOR),
+        SyntaxGroup("clighterDtorRef",
+            cindex.CursorKind.MEMBER_REF_EXPR, cindex.CursorKind.DESTRUCTOR),
+
+        SyntaxGroup("clighterDataMemberDecl", cindex.CursorKind.FIELD_DECL),
+        SyntaxGroup("clighterDataMemberRef", cindex.CursorKind.MEMBER_REF),
+        SyntaxGroup("clighterDataMemberRef", cindex.CursorKind.MEMBER_REF_EXPR),
+
+        SyntaxGroup("clighterFunctionDecl", cindex.CursorKind.FUNCTION_DECL),
+        SyntaxGroup("clighterFunctionRef",
+            cindex.CursorKind.DECL_REF_EXPR, cindex.CursorKind.FUNCTION_DECL),
+
+        SyntaxGroup("clighterParamDecl", cindex.CursorKind.PARM_DECL),
+        SyntaxGroup("clighterParamRef",
+            cindex.CursorKind.DECL_REF_EXPR, cindex.CursorKind.PARM_DECL),
+
+        SyntaxGroup("clighterVarDecl", cindex.CursorKind.VAR_DECL),
+        SyntaxGroup("clighterVarRef",
+            cindex.CursorKind.DECL_REF_EXPR, cindex.CursorKind.VAR_DECL),
+
+
+        ]
+
 CUSTOM_SYNTAX_GROUP = {
     cindex.CursorKind.INCLUSION_DIRECTIVE: 'cligherInclusionDirective',
     cindex.CursorKind.MACRO_INSTANTIATION: 'clighterMacroInstantiation',
@@ -31,14 +141,17 @@ CUSTOM_SYNTAX_GROUP = {
     cindex.CursorKind.TEMPLATE_REF: 'clighterTemplateRef', # template class ref
     cindex.CursorKind.DECL_REF_EXPR:
     {
-        cindex.TypeKind.FUNCTIONPROTO: 'clighterDeclRefExprCall', # function call
+        cindex.TypeKind.FUNCTIONPROTO:
+            'clighterDeclRefExprCall', # function call
         cindex.TypeKind.ENUM: 'clighterDeclRefExprEnum',  # enum ref
         cindex.TypeKind.TYPEDEF: 'clighterTypeRef',  # ex: cout
     },
-    cindex.CursorKind.MEMBER_REF: 'clighterDeclRefExprCall', # ex: designated initializer
+    cindex.CursorKind.MEMBER_REF:
+         'clighterDeclRefExprCall', # ex: designated initializer
     cindex.CursorKind.MEMBER_REF_EXPR:
     {
-        cindex.TypeKind.UNEXPOSED: 'clighterMemberRefExprCall', # member function call
+        cindex.TypeKind.UNEXPOSED:
+            'clighterMemberRefExprCall', # member function call
     },
 }
 
@@ -167,7 +280,8 @@ def __do_highlight(tu, f, syntax_range, symbol, occurrences_range, tick):
                 token.spelling)]]
 
         if __is_in_range(token.location.line, syntax_range):
-            group = __get_syntax_group(t_cursor.kind, t_cursor.type.kind)
+            group = __get_syntax_group(t_cursor)
+
             if group:
                 __vim_matchaddpos(group, pos, SYNTAX_PRI)
 
@@ -227,7 +341,41 @@ def __get_default_syn(cursor_kind):
         return None
 
 
-def __get_syntax_group(cursor_kind, type_kind):
+def get_type_decl(cursor):
+    """
+    returns the cursor to the declaration of the type
+    referenced by @cursor
+    recurse into typedefs and using aliases
+    """
+    decl = cursor.get_definition()
+
+    if decl is None:
+        print "none: " + cursor.spelling
+        return None
+
+    while decl.kind == cindex.CursorKind.TYPEDEF_DECL or \
+            decl.kind == cindex.CursorKind.TYPE_ALIAS_DECL:
+        decl = decl.underlying_typedef_type.get_declaration()
+
+    return decl
+
+
+def __get_syntax_group(cursor):
+
+    # print ">> " + cursor.spelling
+    # print cursor.kind
+
+    if cursor.kind == cindex.CursorKind.TYPE_REF:
+        decl = get_type_decl(cursor)
+    else:
+        decl = cursor.referenced
+
+    for syntax_groups in SYNTAX_GROUPS:
+        if syntax_groups.isMatch(cursor.kind, decl.kind if decl else None):
+            return syntax_groups.group_name
+
+    return None
+
     group = __get_default_syn(cursor_kind)
 
     custom = CUSTOM_SYNTAX_GROUP.get(cursor_kind)
