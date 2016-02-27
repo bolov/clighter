@@ -16,6 +16,27 @@ if exists('g:loaded_clighter')
     finish
 endif
 
+fun! MatchIt(matches, priority) " {'GROUP1' : [[],[]], 'GROUP2' : [[],[]]}
+    for [group, all_pos] in items(a:matches)
+        let s:count = 0
+        let s:match8 = []
+
+        for pos in all_pos
+            call add(s:match8, pos)
+            let s:count = s:count + 1
+            if s:count == 8
+                call matchaddpos(group, s:match8, a:priority)
+
+                let s:count = 0
+                let s:match8 = []
+            endif
+        endfor
+
+        call matchaddpos(group, s:match8, a:priority)
+    endfor
+endf
+
+
 let g:clighter_autostart = get(g:, 'clighter_autostart', 1)
 let g:clighter_libclang_file = get(g:, 'clighter_libclang_file', '')
 let g:clighter_rename_prompt_level = get(g:, 'clighter_rename_prompt_level', 1)
@@ -24,6 +45,7 @@ let g:clighter_highlight_blacklist = get(g:, 'clighter_highlight_blacklist', ['c
 let g:clighter_occurrences_mode = get(g:, 'clighter_occurrences_mode', 0)
 let g:clighter_heuristic_compile_args = get(g:, 'clighter_heuristic_compile_args', 1)
 let g:clighter_compile_args = get(g:, 'clighter_compile_args', [])
+let g:clighter_highlight_mode = get(g:, 'clighter_highlight_mode', 1)
 
 let g:ClighterOccurrences = get(g:, 'ClighterOccurrences', 1)
 

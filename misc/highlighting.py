@@ -129,19 +129,20 @@ CUSTOM_SYNTAX_GROUP = {
     cindex.CursorKind.NAMESPACE: 'clighterNamespace',
     cindex.CursorKind.CLASS_TEMPLATE: 'clighterClassDecl',
     cindex.CursorKind.TEMPLATE_TYPE_PARAMETER: 'clighterTemplateTypeParameter',
+    cindex.CursorKind.TEMPLATE_NON_TYPE_PARAMETER: 'clighterTemplateNoneTypeParameter',
     cindex.CursorKind.TYPE_REF: 'clighterTypeRef',  # class ref
     cindex.CursorKind.NAMESPACE_REF: 'clighterNamespaceRef',  # namespace ref
-    cindex.CursorKind.TEMPLATE_REF: 'clighterTemplateRef', # template class ref
+    cindex.CursorKind.TEMPLATE_REF: 'clighterTemplateRef',  # template class ref
     cindex.CursorKind.DECL_REF_EXPR:
     {
-        cindex.TypeKind.FUNCTIONPROTO: 'clighterDeclRefExprCall', # function call
+        cindex.TypeKind.FUNCTIONPROTO: 'clighterDeclRefExprCall',  # function call
         cindex.TypeKind.ENUM: 'clighterDeclRefExprEnum',  # enum ref
         cindex.TypeKind.TYPEDEF: 'clighterTypeRef',  # ex: cout
     },
-    cindex.CursorKind.MEMBER_REF: 'clighterDeclRefExprCall', # ex: designated initializer
+    cindex.CursorKind.MEMBER_REF: 'clighterDeclRefExprCall',  # ex: designated initializer
     cindex.CursorKind.MEMBER_REF_EXPR:
     {
-        cindex.TypeKind.UNEXPOSED: 'clighterMemberRefExprCall', # member function call
+        cindex.TypeKind.UNEXPOSED: 'clighterMemberRefExprCall',  # member function call
     },
 }
 
@@ -179,8 +180,6 @@ def hl_window(clang_service, do_occurrences):
     if not tu:
         return
 
-    current_file = tu.get_file(cc.name)
-
     top = string.atoi(vim.eval("line('w0')"))
     bottom = string.atoi(vim.eval("line('w$')"))
     height = bottom - top + 1
@@ -188,7 +187,7 @@ def hl_window(clang_service, do_occurrences):
     symbol = None
 
     if vim.eval('g:ClighterOccurrences') == '1':
-        vim_cursor = clighter_helper.get_vim_cursor(tu, current_file)
+        vim_cursor = clighter_helper.get_vim_cursor(tu)
         symbol = clighter_helper.get_vim_symbol(vim_cursor)
 
     occurrences_range = w_range = [top, bottom]
@@ -219,106 +218,80 @@ def hl_window(clang_service, do_occurrences):
     if not do_occurrences:
         occurrences_range = None
 
+    hl_window.symbol = symbol
+
     __do_highlight(
         tu,
-        current_file,
+        vim.current.buffer.name,
         syntax_range,
-        symbol,
         occurrences_range,
         parse_tick)
 
 
-def __do_highlight(tu, f, syntax_range, symbol, occurrences_range, tick):
-    if not syntax_range and (not symbol or not occurrences_range):
+def __do_highlight(tu, file_name, syntax_range, occurrences_range, tick):
+    file = tu.get_file(file_name)
+
+    if not syntax_range and (not hl_window.symbol or not occurrences_range):
         return
 
     if syntax_range:
         vim.current.window.vars['clighter_hl'][1] = syntax_range
 
-    if occurrences_range and symbol:
+    if occurrences_range and hl_window.symbol:
         vim.current.window.vars['clighter_hl'][2] = occurrences_range
-        hl_window.symbol = symbol
 
     union_range = __union(syntax_range, occurrences_range)
 
     location1 = cindex.SourceLocation.from_position(
-        tu, f, line=union_range[0], column=1)
+        tu, file, line=union_range[0], column=1)
     location2 = cindex.SourceLocation.from_position(
-        tu, f, line=union_range[1] + 1, column=1)
+        tu, file, line=union_range[1] + 1, column=1)
     tokens = tu.get_tokens(
         extent=cindex.SourceRange.from_locations(
             location1,
             location2))
 
-    # draw_map = {}  # {priority:{group:[[[line, column, len]]]}}
-
+    syntax = {}
+    occurrence = {'clighterOccurrences':[]}
     for token in tokens:
-        if token.kind.value != 2: # no keyword, comment
+        if token.kind.value != 2:  # no keyword, comment
             continue
 
-        t_cursor = cindex.Cursor.from_location(
-            tu,
-            cindex.SourceLocation.from_position(
-                tu, f,
-                token.location.line,
-                token.location.column
-            )
-        )
+        t_cursor = token.cursor
+        t_cursor._tu = tu
 
-        pos = [
-            [token.location.line, token.location.column, len(
-                token.spelling)]]
+        # t_cursor = cindex.Cursor.from_location(
+            # tu,
+            # cindex.SourceLocation.from_position(
+                # tu, file,
+                # token.location.line,
+                # token.location.column
+            # )
+        # )
 
-        if __is_in_range(token.location.line, syntax_range):
+        pos = [token.location.line, token.location.column, len( token.spelling)]
+
+        if t_cursor.spelling == token.spelling and __is_in_range(token.location.line, syntax_range):
             group = __get_syntax_group(t_cursor)
-
             if group:
-                __vim_matchaddpos(group, pos, SYNTAX_PRI)
+                if not syntax.has_key(group):
+                    syntax[group] = []
 
-            #__add_to_draw_map(
-               # draw_map, SYNTAX_PRI, group, [token.location.line,
-               # token.location.column, len( token.spelling)])
+                syntax[group].append(pos)
 
-        if symbol and __is_in_range(token.location.line, occurrences_range):
+        if hl_window.symbol and __is_in_range(token.location.line, occurrences_range):
             t_symbol = clighter_helper.get_semantic_symbol(t_cursor)
-            if t_symbol and token.spelling == t_symbol.spelling and t_symbol == symbol:
-                __vim_matchaddpos('clighterOccurrences', pos, OCCURRENCES_PRI)
+            if t_symbol and token.spelling == t_symbol.spelling and t_symbol == hl_window.symbol:
+                occurrence['clighterOccurrences'].append(pos)
 
-               #__add_to_draw_map(
-                # draw_map, OCCURRENCES_PRI, 'clighterOccurrences', [
-                # token.location.line, token.location.column, len(
-                # token.spelling)])
+    cmd = "call MatchIt({0}, {1})".format(syntax, SYNTAX_PRI)
+    vim.command(cmd)
 
-    #__draw(draw_map, tick)
+    cmd = "call MatchIt({0}, {1})".format(occurrence , OCCURRENCES_PRI)
+    vim.command(cmd)
+
     vim.current.window.vars['clighter_hl'][0] = tick
 
-
-# def __draw(draw_map, tick):
-    # for priority, group_map in draw_map.items():
-    # for group, draw_pos in group_map.items():
-    # for pos in draw_pos:
-    #__vim_matchaddpos(
-    # group=group,
-    # pos=pos,
-    # priority=priority
-    #)
-
-
-# def __add_to_draw_map(draw_map, priority, group, pos):
-    # if not group or not pos:
-    # return
-
-    # if not draw_map.get(priority):
-    #draw_map[priority] = {}
-
-    # if not draw_map[priority].get(group):
-    #draw_map[priority][group] = [[pos]]
-    # return
-
-    # if len(draw_map[priority][group][-1]) < 8:
-    # draw_map[priority][group][-1].append(pos)
-    # else:
-    # draw_map[priority][group].append([pos])
 
 def __get_default_syn(cursor_kind):
     if cursor_kind.is_preprocessing():
@@ -391,11 +364,6 @@ def __get_syntax_group(cursor):
         return None
 
     return group
-
-
-def __vim_matchaddpos(group, pos, priority):
-    cmd = "call matchaddpos('{0}', {1}, {2})".format(group, pos, priority)
-    vim.command(cmd)
 
 
 def __vim_clear_match_pri(*priorities):

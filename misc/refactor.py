@@ -16,7 +16,7 @@ def rename(clang_service):
         return
 
     symbol = clighter_helper.get_vim_symbol(
-        clighter_helper.get_vim_cursor(tu, tu.get_file(cc.name)))
+        clighter_helper.get_vim_cursor(tu))
 
     if not symbol:
         return
@@ -34,18 +34,18 @@ def rename(clang_service):
 
     pos = vim.current.window.cursor
 
-    locs = set()
-    locs.add((symbol.location.line, symbol.location.column,
-              symbol.location.file.name))
+    tobeReplace = set()
+    tobeReplace.add((symbol.location.line, symbol.location.column,
+                     symbol.location.file.name))
     clighter_helper.search_referenced_tokens(
         tu,
         symbol,
-        locs)
+        tobeReplace)
 
     prompt = string.atoi(vim.eval('g:clighter_rename_prompt_level'))
 
     __vim_multi_replace(
-        locs,
+        tobeReplace,
         old_name,
         new_name,
         prompt)
@@ -61,8 +61,7 @@ def rename(clang_service):
     vim.current.window.cursor = pos
 
     clang_service.update_buffers(__get_bufctx_list())
-    clang_service.switch(vim.current.buffer.name)           
-    
+    clang_service.switch(vim.current.buffer.name)
 
 
 def __cross_buffer_rename(clang_service, symbol_usr, new_name, prompt):
@@ -94,11 +93,11 @@ def __search_symbol_and_rename(tu, symbol_usr, new_name, prompt):
     # all symbols with the same name
     old_name = clighter_helper.get_spelling_or_displayname(symbols[0])
 
-    locs = set()
+    toBeReplace = set()
     for sym in symbols:
-        clighter_helper.search_referenced_tokens(tu, sym, locs)
+        clighter_helper.search_referenced_tokens(tu, sym, toBeReplace)
 
-    if len(locs):
+    if len(toBeReplace):
         if prompt >= 1:
             if vim.eval(
                 'confirm("found symbols in {0}, rename them?", "&Yes\n&No", 1)'.format(
@@ -106,19 +105,19 @@ def __search_symbol_and_rename(tu, symbol_usr, new_name, prompt):
                 return
 
         __vim_multi_replace(
-            locs,
+            toBeReplace,
             old_name,
             new_name,
             prompt)
 
 
-def __vim_multi_replace(locs, old, new, prompt):
-    if not locs:
+def __vim_multi_replace(toBeReplace, old, new, prompt):
+    if not toBeReplace:
         return
 
     pattern = ""
 
-    for line, column, bufname in locs:
+    for line, column, bufname in toBeReplace:
         if not bufname or bufname != vim.current.buffer.name:
             continue
 
