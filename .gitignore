@@ -2,3 +2,4 @@
 .ropeproject
 doc/tags
 .session
+test/*

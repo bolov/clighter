@@ -42,6 +42,8 @@ SYNTAX_GROUPS = [
     SyntaxGroup("clighterClassRef", cindex.CursorKind.TYPE_REF, cindex.CursorKind.CLASS_DECL),
     SyntaxGroup("clighterUnionRef", cindex.CursorKind.TYPE_REF, cindex.CursorKind.UNION_DECL),
     SyntaxGroup("clighterEnumRef", cindex.CursorKind.TYPE_REF, cindex.CursorKind.ENUM_DECL),
+    SyntaxGroup("clighterTemplateTypeParamRef",
+        cindex.CursorKind.TYPE_REF, cindex.CursorKind.TEMPLATE_TYPE_PARAMETER),
     SyntaxGroup("clighterOtherTypeRef", cindex.CursorKind.TYPE_REF),
 
     SyntaxGroup("clighterEnumConstantDecl", cindex.CursorKind.ENUM_CONSTANT_DECL),
@@ -49,20 +51,18 @@ SYNTAX_GROUPS = [
         cindex.CursorKind.DECL_REF_EXPR, cindex.CursorKind.ENUM_CONSTANT_DECL),
 
     SyntaxGroup("clighterTemplateTypeParamDecl", cindex.CursorKind.TEMPLATE_TYPE_PARAMETER),
+    SyntaxGroup("clighterTemplateTypeParamDecl", cindex.CursorKind.TEMPLATE_TEMPLATE_PARAMETER),
     SyntaxGroup("clighterTemplateTypeParamRef",
-        cindex.CursorKind.TEMPLATE_REF, cindex.CursorKind.TEMPLATE_TYPE_PARAMETER),
+        cindex.CursorKind.TEMPLATE_REF, cindex.CursorKind.TEMPLATE_TEMPLATE_PARAMETER),
 
     SyntaxGroup("clighterTemplateNonTypeParamDecl", cindex.CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
     SyntaxGroup("clighterTemplateNonTypeParamRef",
-        cindex.CursorKind.TEMPLATE_REF, cindex.CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
-
-    #TODO template template
+        cindex.CursorKind.DECL_REF_EXPR, cindex.CursorKind.TEMPLATE_NON_TYPE_PARAMETER),
 
     SyntaxGroup("clighterClassTemplateDecl", cindex.CursorKind.CLASS_TEMPLATE),
     SyntaxGroup("clighterClassTemplateRef",
         cindex.CursorKind.TEMPLATE_REF, cindex.CursorKind.CLASS_TEMPLATE),
 
-    #TODO check partial specialization
     SyntaxGroup("clighterClassTemplatePartialSpecDecl",
         cindex.CursorKind.CLASS_TEMPLATE_PARTIAL_SPECIALIZATION),
     SyntaxGroup("clighterClassTemplatePartialSpecRef",
@@ -87,7 +87,9 @@ SYNTAX_GROUPS = [
     SyntaxGroup("clighterConstructorRef",
             cindex.CursorKind.MEMBER_REF, cindex.CursorKind.CONSTRUCTOR),
     SyntaxGroup("clighterConstructorRef",
-        cindex.CursorKind.MEMBER_REF_EXPR, cindex.CursorKind.CONSTRUCTOR),
+            cindex.CursorKind.MEMBER_REF_EXPR, cindex.CursorKind.CONSTRUCTOR),
+    SyntaxGroup("clighterConstructorRef",
+            cindex.CursorKind.CALL_EXPR, cindex.CursorKind.CONSTRUCTOR),
 
     SyntaxGroup("clighterDtorDecl", cindex.CursorKind.DESTRUCTOR),
     SyntaxGroup("clighterDtorRef", cindex.CursorKind.MEMBER_REF, cindex.CursorKind.DESTRUCTOR),
@@ -337,10 +339,6 @@ def get_type_decl(cursor):
     """
     decl = cursor.get_definition()
 
-    if decl is None:
-        print "none: " + cursor.spelling
-        return None
-
     while decl.kind == cindex.CursorKind.TYPEDEF_DECL or \
             decl.kind == cindex.CursorKind.TYPE_ALIAS_DECL:
         decl = decl.underlying_typedef_type.get_declaration()
@@ -360,27 +358,16 @@ def get_template_kind(cursor):
 
 def __get_syntax_group(cursor):
 
-    print ">> '" + cursor.spelling + "' ",
-    print cursor.kind
-
     decl = get_type_decl(cursor) if cursor.kind == cindex.CursorKind.TYPE_REF else cursor.referenced
     decl_kind = decl.kind if decl else None
     template_kind = get_template_kind(cursor)
 
     secondary_kind = template_kind if template_kind is not None else decl_kind
 
-    print "decl kind: ",
-    print decl.kind if decl else "none"
-
-    print "template kind: ",
-    print template_kind
-
     for syntax_groups in SYNTAX_GROUPS:
         if syntax_groups.isMatch(cursor.kind, secondary_kind):
-            print "syntax: " + syntax_groups.group_name
             return syntax_groups.group_name
 
-    print "syntax: None"
     return None
 
     group = __get_default_syn(cursor_kind)
