@@ -271,7 +271,7 @@ def __do_highlight(tu, file_name, syntax_range, occurrences_range, tick):
 
         pos = [token.location.line, token.location.column, len( token.spelling)]
 
-        if t_cursor.spelling == token.spelling and __is_in_range(token.location.line, syntax_range):
+        if __is_in_range(token.location.line, syntax_range):
             group = __get_syntax_group(t_cursor)
             if group:
                 if not syntax.has_key(group):
