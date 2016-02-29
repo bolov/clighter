@@ -82,6 +82,7 @@ SYNTAX_GROUPS = [
     SyntaxGroup("clighterMethodRef", cindex.CursorKind.MEMBER_REF, cindex.CursorKind.CXX_METHOD),
     SyntaxGroup("clighterMethodRef",
             cindex.CursorKind.MEMBER_REF_EXPR, cindex.CursorKind.CXX_METHOD),
+    SyntaxGroup("clighterMethodRef", cindex.CursorKind.DECL_REF_EXPR, cindex.CursorKind.CXX_METHOD),
 
     SyntaxGroup("clighterConstructorDecl", cindex.CursorKind.CONSTRUCTOR),
     SyntaxGroup("clighterConstructorRef",
@@ -254,7 +255,16 @@ def __do_highlight(tu, file_name, syntax_range, occurrences_range, tick):
     syntax = {}
     occurrence = {'clighterOccurrences':[]}
     for token in tokens:
-        if token.kind.value != 2:  # no keyword, comment
+        if (token.kind == cindex.TokenKind.IDENTIFIER) or \
+           (token.kind == cindex.TokenKind.KEYWORD and token.spelling == "operator") or \
+           (token.kind == cindex.TokenKind.PUNCTUATION and \
+                   (token.cursor.kind in [cindex.CursorKind.FUNCTION_DECL,
+                                          cindex.CursorKind.DECL_REF_EXPR,
+                                          cindex.CursorKind.CXX_METHOD,
+                                          cindex.CursorKind.MEMBER_REF_EXPR,
+                                          ])):
+            pass
+        else:
             continue
 
         t_cursor = token.cursor
