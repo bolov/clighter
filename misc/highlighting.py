@@ -103,6 +103,7 @@ SYNTAX_GROUPS = [
     SyntaxGroup("clighterFunctionDecl", cindex.CursorKind.FUNCTION_DECL),
     SyntaxGroup("clighterFunctionRef",
         cindex.CursorKind.DECL_REF_EXPR, cindex.CursorKind.FUNCTION_DECL),
+    SyntaxGroup("clighterFunctionRef", cindex.CursorKind.OVERLOADED_DECL_REF),
 
     SyntaxGroup("clighterParamDecl", cindex.CursorKind.PARM_DECL),
     SyntaxGroup("clighterParamRef", cindex.CursorKind.DECL_REF_EXPR, cindex.CursorKind.PARM_DECL),
