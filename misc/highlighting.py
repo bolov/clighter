@@ -323,8 +323,9 @@ def get_type_decl(cursor):
     """
     decl = cursor.get_definition()
 
-    while decl.kind == cindex.CursorKind.TYPEDEF_DECL or \
-            decl.kind == cindex.CursorKind.TYPE_ALIAS_DECL:
+    while decl is not None and \
+            (decl.kind == cindex.CursorKind.TYPEDEF_DECL or \
+            decl.kind == cindex.CursorKind.TYPE_ALIAS_DECL):
         decl = decl.underlying_typedef_type.get_declaration()
 
     return decl
