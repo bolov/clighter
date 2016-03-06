@@ -59,5 +59,8 @@ def get():
 
     ycm_args = l['flags']
 
+    # filter non warning options
+    ycm_args = [a for a in ycm_args if not a.startswith("-W")]
+
     return str(ycm_args)
 
